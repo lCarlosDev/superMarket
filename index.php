@@ -82,7 +82,7 @@
                             <td><?php echo $datos['nombre']; ?></td>
                             <td><?php echo $datos['apellido']; ?></td>
                             <td><?php echo $datos['correo']; ?></td>
-                            <td><?php echo $datos['password']; ?></td>
+                            <td><?php echo $datos['contrasena']; ?></td>
                         </tr>
                     <?php endwhile; ?>
                 <?php else: ?>

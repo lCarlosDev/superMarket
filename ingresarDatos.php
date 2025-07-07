@@ -14,12 +14,15 @@
     $contrasena = $_POST['contrasena'];
 
     // Inserta los datos en la tabla (ajusta el nombre del campo de la base de datos si es necesario)
-    $sql = "INSERT INTO usuario(nombre, apellido, correo, password)
+    $sql = "INSERT INTO usuario(nombre, apellido, correo, contrasena)
             VALUES ('$nombre', '$apellido', '$correo', '$contrasena')";
 
     // Ejecuta la consulta
     if (mysqli_query($con, $sql)) {
-        echo "Registro exitoso";
+        //Redirige de vuelta a index.php
+        header ('Location: index.php');
+        exit();
+        
     } else {
         echo "Error al registrar: " . mysqli_error($con);
     }
