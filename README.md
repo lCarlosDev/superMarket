@@ -45,7 +45,7 @@ CREATE TABLE usuario (
     contrasena VARCHAR(100)
 );
 
-## 🚀 Cómo usar el proyecto
+## Cómo usar el proyecto
 
 1. Inicia el servidor desde XAMPP (activar Apache y MySQL).
 2. Abre tu navegador y entra a: `http://localhost/supermarketConexion/index.php`.
