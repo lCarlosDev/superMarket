@@ -72,6 +72,7 @@
                     <th>Apellido</th>
                     <th>Correo</th>
                     <th>Clave</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -83,11 +84,22 @@
                             <td><?php echo $datos['apellido']; ?></td>
                             <td><?php echo $datos['correo']; ?></td>
                             <td><?php echo $datos['contrasena']; ?></td>
-                        </tr>
+                            <td>
+                                <!--Boton para editar -->
+                                <a href="eliminar.php?id=<?php echo $datos['id_usuario']; ?>"
+                                onclick="return confirm('¿Estás segura/o que deseas eliminar este usuario?');">
+                                    Eliminar
+                                </a> | 
+                                <!-- Botón para editar -->
+                                <a href="editar.php?id=<?php echo $datos['id_usuario']; ?>">
+                                    Editar
+                                </a>
+                            </td>
+                                        </tr>
                     <?php endwhile; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5">No hay usuarios registrados</td>
+                        <td colspan="6">No hay usuarios registrados</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
