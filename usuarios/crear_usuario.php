@@ -1,5 +1,5 @@
 <?php
-    require('conexion.php');
+    require('../includes/conexion.php');
     $con = conexion();
 
     // Verifica si la conexión fue exitosa
@@ -13,20 +13,17 @@
     $correo     = $_POST['correo'];
     $contrasena = $_POST['contrasena'];
 
-    // Inserta los datos en la tabla (ajusta el nombre del campo de la base de datos si es necesario)
+    // Inserta los datos en la tabla
     $sql = "INSERT INTO usuario(nombre, apellido, correo, contrasena)
             VALUES ('$nombre', '$apellido', '$correo', '$contrasena')";
 
     // Ejecuta la consulta
     if (mysqli_query($con, $sql)) {
-        //Redirige de vuelta a index.php
-        header ('Location: index.php');
+        header('Location: index_usuarios.php');
         exit();
-        
     } else {
         echo "Error al registrar: " . mysqli_error($con);
     }
 
-    // Cierra la conexión
     mysqli_close($con);
 ?>

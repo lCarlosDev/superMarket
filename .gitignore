@@ -1,0 +1,6 @@
+# Ignorar archivos de XAMPP o configuraciones locales
+*.log
+*.env
+*.DS_Store
+vendor/
+node_modules/

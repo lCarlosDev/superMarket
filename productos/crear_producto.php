@@ -1,29 +1,6 @@
 <?php
-include '../conexion.php'; // Subimos un nivel para encontrar conexion.php
-
-// Verificamos si el formulario fue enviado
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $conn = conexion(); // Conectamos a la base de datos
-
-    // Obtenemos los datos del formulario
-    $nombre = $_POST['nombre'];
-    $descripcion = $_POST['descripcion'];
-    $precio = $_POST['precio'];
-    $stock = $_POST['stock'];
-    $categoria = $_POST['categoria'];
-
-    // Insertamos el producto en la base de datos
-    $sql = "INSERT INTO producto (nombre, descripcion, precio, stock, categoria)
-            VALUES ('$nombre', '$descripcion', $precio, $stock, '$categoria')";
-
-    if ($conn->query($sql) === TRUE) {
-        // Redireccionamos al index si fue exitoso
-        header("Location: index_productos.php");
-        exit();
-    } else {
-        echo "Error: " . $conn->error;
-    }
-}
+include '../includes/conexion.php';
+include '../includes/header.php'; // encabezado con navegación
 ?>
 
 <!DOCTYPE html>
@@ -31,6 +8,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <title>Crear Producto</title>
+    <link rel="stylesheet" href="../includes/estilos.css"> <!-- hoja de estilos -->
 </head>
 <body>
     <h2>Agregar Nuevo Producto</h2>
@@ -53,5 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <input type="submit" value="Guardar">
         <a href="index_productos.php">Cancelar</a>
     </form>
+
+<?php include '../includes/footer.php'; ?> <!-- pie de página -->
 </body>
 </html>

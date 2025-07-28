@@ -1,7 +1,7 @@
 <?php
     // Incluimos el archivo de conexión a la base de datos
-    include('conexion.php');
-    
+    include('../includes/conexion.php');
+
     // Establecemos la conexión
     $con = conexion();
 
@@ -21,16 +21,14 @@
         // Ejecutamos la consulta
         $consulta = mysqli_query($con, $sql);
 
-        // Si la consulta fue exitosa, redireccionamos de nuevo a index.php
+        // Si la consulta fue exitosa, redireccionamos al listado
         if ($consulta) {
-            header('Location: index.php');
-            exit(); // Nos aseguramos de que el script se detenga aquí
+            header('Location: index_usuario.php');
+            exit(); // Detenemos el script
         } else {
-            // Si algo falló, mostramos el error
             echo "Error al eliminar: " . mysqli_error($con);
         }
     } else {
-        // Si no se recibió ningún ID, mostramos un mensaje
         echo "ID no proporcionado.";
     }
 
