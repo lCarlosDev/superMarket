@@ -1,4 +1,12 @@
 <?php 
+session_start();
+
+if (!isset($_SESSION['nombre_usuario']) || !isset($_SESSION['rol'])) {
+    // Redirige al login si no hay sesión activa
+    header("Location: /supermarketConexion/login/login.php");
+    exit();
+}
+
 include '../includes/conexion.php'; // Ruta corregida
 $con = conexion();
 

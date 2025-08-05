@@ -1,32 +1,52 @@
 <?php
-require('../includes/conexion.php');
+// Paso 1: Iniciar sesión y verificar si es administrador
+include('../includes/auth.php');
+verificarAdmin(); // Solo administradores pueden editar usuarios
+
+// Paso 2: Conexión a la base de datos
+include('../includes/conexion.php');
 $con = conexion();
 
-if (isset($_GET['id'])) {
+if (!$con) {
+    die("Error de conexión: " . mysqli_connect_error());
+}
+
+// Paso 3: Si se accede con GET (desde botón Editar)
+if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['id'])) {
     $id = $_GET['id'];
+
+    // Buscar el usuario por ID
     $sql = "SELECT * FROM usuario WHERE id_usuario = $id";
     $resultado = mysqli_query($con, $sql);
 
     if (mysqli_num_rows($resultado) == 1) {
-        $datos = mysqli_fetch_array($resultado);
+        $usuario = mysqli_fetch_assoc($resultado); // Guardamos sus datos para el formulario
     } else {
         echo "Usuario no encontrado.";
         exit();
     }
 }
 
+// Paso 4: Si se envió el formulario por POST
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $id = $_POST['id'];
-    $nombre = $_POST['nombre'];
-    $apellido = $_POST['apellido'];
-    $correo = $_POST['correo'];
-    $contrasena = $_POST['contrasena'];
+    $id         = $_POST['id'];
+    $nombre     = trim($_POST['nombre']);
+    $apellido   = trim($_POST['apellido']);
+    $correo     = trim($_POST['correo']);
+    $contrasena = trim($_POST['contrasena']);
 
+    // Validar campos
+    if (empty($nombre) || empty($apellido) || empty($correo) || empty($contrasena)) {
+        echo "Todos los campos son obligatorios.";
+        exit();
+    }
+
+    // Actualizar los datos en la base
     $sql = "UPDATE usuario SET 
-                nombre='$nombre',
-                apellido='$apellido',
-                correo='$correo',
-                contrasena='$contrasena'
+                nombre = '$nombre',
+                apellido = '$apellido',
+                correo = '$correo',
+                contrasena = '$contrasena'
             WHERE id_usuario = $id";
 
     if (mysqli_query($con, $sql)) {
@@ -37,54 +57,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
+// Paso 5: Cerrar conexión
 mysqli_close($con);
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Editar Usuario</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-5">
-        <h2 class="text-center mb-4">Editar Usuario</h2>
+<!-- Paso 6: Formulario de edición -->
+<?php include('../includes/header.php'); ?>
 
-        <form action="editar_usuario.php" method="POST" class="p-4 bg-light border rounded shadow-sm">
-            <input type="hidden" name="id" value="<?php echo $datos['id_usuario']; ?>">
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Editar Usuario</h2>
 
-            <div class="mb-3">
-                <label for="nombre" class="form-label">Nombre</label>
-                <input type="text" class="form-control" name="nombre" id="nombre" required
-                       value="<?php echo $datos['nombre']; ?>">
-            </div>
+    <form action="editar_usuario.php" method="POST" class="p-4 bg-light border rounded shadow-sm w-50 mx-auto">
+        <input type="hidden" name="id" value="<?= $usuario['id_usuario'] ?>">
 
-            <div class="mb-3">
-                <label for="apellido" class="form-label">Apellido</label>
-                <input type="text" class="form-control" name="apellido" id="apellido" required
-                       value="<?php echo $datos['apellido']; ?>">
-            </div>
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text" name="nombre" id="nombre" class="form-control" value="<?= $usuario['nombre'] ?>" required>
+        </div>
 
-            <div class="mb-3">
-                <label for="correo" class="form-label">Correo</label>
-                <input type="email" class="form-control" name="correo" id="correo" required
-                       value="<?php echo $datos['correo']; ?>">
-            </div>
+        <div class="mb-3">
+            <label for="apellido" class="form-label">Apellido</label>
+            <input type="text" name="apellido" id="apellido" class="form-control" value="<?= $usuario['apellido'] ?>" required>
+        </div>
 
-            <div class="mb-3">
-                <label for="contrasena" class="form-label">Contraseña</label>
-                <input type="password" class="form-control" name="contrasena" id="contrasena" required
-                       value="<?php echo $datos['contrasena']; ?>">
-            </div>
+        <div class="mb-3">
+            <label for="correo" class="form-label">Correo</label>
+            <input type="email" name="correo" id="correo" class="form-control" value="<?= $usuario['correo'] ?>" required>
+        </div>
 
-            <div class="text-center">
-                <button type="submit" class="btn btn-primary">Actualizar</button>
-                <a href="index_usuario.php" class="btn btn-secondary">Cancelar</a>
-            </div>
-        </form>
-    </div>
+        <div class="mb-3">
+            <label for="contrasena" class="form-label">Contraseña</label>
+            <input type="password" name="contrasena" id="contrasena" class="form-control" value="<?= $usuario['contrasena'] ?>" required>
+        </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Actualizar</button>
+            <a href="index_usuario.php" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<?php include('../includes/footer.php'); ?>

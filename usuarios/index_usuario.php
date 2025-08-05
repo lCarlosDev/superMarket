@@ -1,16 +1,26 @@
 <?php
+// Inicia sesión y verifica que el usuario sea un ADMIN
+include('../includes/auth.php');
+verificarAdmin();  // Solo administradores pueden entrar aquí
+
+// Conexión a la base de datos
 include('../includes/conexion.php');
-include('../includes/header.php');
 $con = conexion();
 
+// Verifica que la conexión se haya establecido correctamente
 if (!$con) {
     die("Error de conexión: " . mysqli_connect_error());
 }
 
+// Consulta para obtener todos los usuarios registrados
 $sql = "SELECT * FROM usuario";
 $consulta = mysqli_query($con, $sql);
+
+// Incluye el encabezado con el menú y sesión iniciada
+include('../includes/header.php');
 ?>
 
+<!-- Formulario para registrar un nuevo usuario -->
 <div class="form_registro">
     <h2 style="text-align:center;">Registro de Usuarios</h2>
     <form action="crear_usuario.php" method="POST" class="p-4 bg-light border rounded shadow-sm w-50 mx-auto">
@@ -34,6 +44,7 @@ $consulta = mysqli_query($con, $sql);
     </form>
 </div>
 
+<!-- Tabla con lista de usuarios existentes -->
 <h2 style="text-align:center;">Lista de Usuarios</h2>
 <div>
     <table class="table table-striped table-bordered table-hover mt-4 w-75 mx-auto">
@@ -58,18 +69,19 @@ $consulta = mysqli_query($con, $sql);
                         <td><?= $datos['contrasena']; ?></td>
                         <td>
                             <a href="eliminar_usuario.php?id=<?= $datos['id_usuario']; ?>"
-                            onclick="return confirm('¿Estás segura/o que deseas eliminar este usuario?');">Eliminar</a> | 
+                               onclick="return confirm('¿Estás segura/o que deseas eliminar este usuario?');">Eliminar</a> |
                             <a href="editar_usuario.php?id=<?= $datos['id_usuario']; ?>">Editar</a>
                         </td>
                     </tr>
                 <?php endwhile; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="6">No hay usuarios registrados</td>
+                    <td colspan="6" class="text-center">No hay usuarios registrados</td>
                 </tr>
             <?php endif; ?>
         </tbody>
     </table>
 </div>
 
+<!-- Pie de página -->
 <?php include('../includes/footer.php'); ?>
