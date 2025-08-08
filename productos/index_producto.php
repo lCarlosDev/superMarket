@@ -45,6 +45,7 @@ $resultado = $con->query($sql);
                 <td>
                     <a href="editar_producto.php?id=<?= $row['id_producto'] ?>" class="btn btn-sm btn-primary">✏️ Editar</a>
                     <a href="eliminar_producto.php?id=<?= $row['id_producto'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este producto?')">🗑️ Eliminar</a>
+                    <a href="../carrito/agregar_carrito.php?id=<?= $row['id_producto'] ?>" class="btn btn-sm btn-success">🛒 Agregar</a>
                 </td>
             </tr>
             <?php endwhile; ?>

@@ -1,77 +1,125 @@
 <?php
-session_start();
+// --- Guards y conexión ---
+require __DIR__ . "/../../includes/auth.php";
+require_login();
+require_role('admin');
 
-if (!isset($_SESSION['nombre_usuario']) || !isset($_SESSION['rol'])) {
-    // Redirige al login si no hay sesión activa
-    header("Location: /supermarketConexion/login/login.php");
-    exit();
-}
-
-// 1. Incluir la conexión
-require('../../includes/conexion.php');
+require __DIR__ . "/../../includes/conexion.php";
 $con = conexion();
 
-// 2. Verificar que se recibió una petición POST (es decir, que el formulario fue enviado)
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // 3. Capturar los datos del formulario
-    $nombre     = $_POST['nombre'];
-    $apellido   = $_POST['apellido'];
-    $correo     = $_POST['correo'];
-    $contrasena = $_POST['contrasena'];
+// --- Procesar POST (crear admin) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Solo recibimos lo que el formulario realmente envía:
+    $id_usuario = isset($_POST['id_usuario']) ? (int)$_POST['id_usuario'] : 0;
+    $cargo      = trim($_POST['cargo'] ?? '');
 
-    // 4. Definir el rol como "admin"
-    $rol = 'admin';
+    // Validaciones simples
+    if ($id_usuario <= 0 || $cargo === '') {
+        $_SESSION['flash_error'] = "Selecciona un usuario y escribe el cargo.";
+        header("Location: crear_admin.php");
+        exit();
+    }
 
-    // 5. Preparar e insertar el nuevo administrador en la base de datos
-    $sql = "INSERT INTO usuario (nombre, apellido, correo, contrasena, rol)
-            VALUES ('$nombre', '$apellido', '$correo', '$contrasena', '$rol')";
+    // Evitar duplicados: ¿ya es admin?
+    $stmt = $con->prepare("SELECT 1 FROM admin WHERE id_usuario = ? LIMIT 1");
+    $stmt->bind_param("i", $id_usuario);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows === 1) {
+        $_SESSION['flash_error'] = "Ese usuario ya es administrador.";
+        header("Location: crear_admin.php");
+        exit();
+    }
 
-    // 6. Ejecutar la consulta e ir al index si fue exitosa
-    if (mysqli_query($con, $sql)) {
-        header('Location: index_admin.php');
+    // Insertar en la tabla admin (NO en usuario)
+    $stmt = $con->prepare("INSERT INTO admin (id_usuario, cargo) VALUES (?, ?)");
+    $stmt->bind_param("is", $id_usuario, $cargo);
+
+    if ($stmt->execute()) {
+        $_SESSION['flash_success'] = "Administrador creado correctamente.";
+        header("Location: index_admin.php");
         exit();
     } else {
-        echo "Error al registrar: " . mysqli_error($con);
+        $_SESSION['flash_error'] = "Error al crear administrador: " . $stmt->error;
+        header("Location: crear_admin.php");
+        exit();
     }
 }
 
-// 7. Cerrar la conexión si no se envió formulario
-mysqli_close($con);
+// --- GET: pintar formulario + lista ---
 ?>
+<?php include __DIR__ . "/../../includes/header.php"; ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Registrar Administrador</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Registrar Nuevo Administrador</h2>
+<div class="container mt-4">
+    <h2 class="mb-4">Registro de Administradores</h2>
 
-    <form action="" method="POST" class="p-4 bg-light border rounded shadow-sm">
-        <div class="mb-3">
-            <label for="nombre" class="form-label">Nombre</label>
-            <input type="text" class="form-control" name="nombre" id="nombre" required>
-        </div>
-        <div class="mb-3">
-            <label for="apellido" class="form-label">Apellido</label>
-            <input type="text" class="form-control" name="apellido" id="apellido" required>
-        </div>
-        <div class="mb-3">
-            <label for="correo" class="form-label">Correo</label>
-            <input type="email" class="form-control" name="correo" id="correo" required>
-        </div>
-        <div class="mb-3">
-            <label for="contrasena" class="form-label">Contraseña</label>
-            <input type="password" class="form-control" name="contrasena" id="contrasena" required>
-        </div>
-        <div class="text-center">
-            <button type="submit" class="btn btn-success">Registrar</button>
-            <a href="index_admin.php" class="btn btn-secondary">Cancelar</a>
-        </div>
-    </form>
+    <?php if (!empty($_SESSION['flash_error'])): ?>
+        <div class="alert alert-danger"><?= $_SESSION['flash_error']; unset($_SESSION['flash_error']); ?></div>
+    <?php endif; ?>
+    <?php if (!empty($_SESSION['flash_success'])): ?>
+        <div class="alert alert-success"><?= $_SESSION['flash_success']; unset($_SESSION['flash_success']); ?></div>
+    <?php endif; ?>
+
+    <div class="card p-4 mb-4">
+        <form method="POST" action="crear_admin.php">
+            <div class="mb-3">
+                <label class="form-label">Seleccionar Usuario</label>
+                <select class="form-select" name="id_usuario" required>
+                    <option value="">-- Selecciona --</option>
+                    <?php
+                    // Cargamos usuarios existentes
+                    $rs = $con->query("SELECT id_usuario, nombre, apellido FROM usuario ORDER BY nombre, apellido");
+                    while ($u = $rs->fetch_assoc()):
+                    ?>
+                        <option value="<?= (int)$u['id_usuario'] ?>">
+                            <?= htmlspecialchars($u['nombre'] . ' ' . $u['apellido']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Cargo</label>
+                <input class="form-control" type="text" name="cargo" required>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Registrar Administrador</button>
+        </form>
+    </div>
+
+    <h3 class="mt-5 mb-3">Lista de Administradores</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID Admin</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Cargo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php
+            $sql = "SELECT a.id_admin, u.nombre, u.apellido, a.cargo
+                    FROM admin a
+                    INNER JOIN usuario u ON u.id_usuario = a.id_usuario
+                    ORDER BY a.id_admin DESC";
+            $admins = $con->query($sql);
+            while ($row = $admins->fetch_assoc()):
+            ?>
+                <tr>
+                    <td><?= (int)$row['id_admin'] ?></td>
+                    <td><?= htmlspecialchars($row['nombre']) ?></td>
+                    <td><?= htmlspecialchars($row['apellido']) ?></td>
+                    <td><?= htmlspecialchars($row['cargo']) ?></td>
+                    <td>
+                        <a class="btn btn-warning btn-sm" href="editar_admin.php?id=<?= (int)$row['id_admin'] ?>">Editar</a>
+                        <a class="btn btn-danger btn-sm" href="eliminar_admin.php?id=<?= (int)$row['id_admin'] ?>"
+                           onclick="return confirm('¿Eliminar este administrador?')">Eliminar</a>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
-</body>
-</html>

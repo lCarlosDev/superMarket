@@ -1,54 +1,84 @@
 <?php
-session_start(); // Importante para poder guardar datos de sesión (usuario logueado)
+require('../includes/conexion.php');
+require('../includes/auth.php'); // centraliza la sesión
 
-require('../includes/conexion.php'); // Conectamos a la base de datos
-$con = conexion(); // Llamamos la función para obtener la conexión
+$con = conexion();
 
-// Verificamos si se enviaron los datos desde el formulario
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $correo = $_POST['correo'];
-    $contrasena = $_POST['contrasena'];
-
-    // 1. Buscamos en la tabla usuario
-    $sql = "SELECT * FROM usuario WHERE correo = '$correo' AND contrasena = '$contrasena'";
-    $resultado = mysqli_query($con, $sql);
-
-    // 2. Si hay coincidencia con un usuario
-    if (mysqli_num_rows($resultado) == 1) {
-        $usuario = mysqli_fetch_assoc($resultado);
-
-        // Guardamos datos básicos en sesión
-        $_SESSION['id_usuario'] = $usuario['id_usuario'];
-        $_SESSION['nombre'] = $usuario['nombre'];
-
-        $id_usuario = $usuario['id_usuario'];
-
-        // 3. Verificamos si es administrador
-        $sql_admin = "SELECT * FROM admin WHERE id_usuario = $id_usuario";
-        $resultado_admin = mysqli_query($con, $sql_admin);
-
-        if (mysqli_num_rows($resultado_admin) == 1) {
-            $_SESSION['rol'] = 'admin';
-            header("Location: ../usuarios/administrador/index_admin.php"); // Redirigimos al módulo admin
-            exit();
-        }
-
-        // 4. Verificamos si es cliente
-        $sql_cliente = "SELECT * FROM cliente WHERE id_usuario = $id_usuario";
-        $resultado_cliente = mysqli_query($con, $sql_cliente);
-
-        if (mysqli_num_rows($resultado_cliente) == 1) {
-            $_SESSION['rol'] = 'cliente';
-            header("Location: ../usuarios/cliente/index_cliente.php"); // Redirigimos al módulo cliente
-            exit();
-        }
-
-        // 5. Si no está ni en admin ni en cliente
-        echo "El usuario no tiene rol asignado.";
-    } else {
-        echo "Correo o contraseña incorrectos.";
-    }
-} else {
-    echo "Acceso no permitido.";
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: login.php");
+    exit();
 }
-?>
+
+$correo     = trim($_POST['correo'] ?? '');
+$contrasena = trim($_POST['contrasena'] ?? '');
+
+if ($correo === '' || $contrasena === '') {
+    $_SESSION['flash_error'] = "Por favor ingresa correo y contraseña.";
+    header("Location: login.php");
+    exit();
+}
+
+// 1) Buscar usuario por correo
+$stmt = $con->prepare("SELECT id_usuario, nombre, correo, contrasena FROM usuario WHERE correo = ?");
+$stmt->bind_param("s", $correo);
+$stmt->execute();
+$res = $stmt->get_result();
+
+if ($res->num_rows !== 1) {
+    $_SESSION['flash_error'] = "Usuario o contraseña incorrectos.";
+    header("Location: login.php");
+    exit();
+}
+
+$u = $res->fetch_assoc();
+
+// 2) Validar contraseña (texto plano por ahora)
+// TODO: migrar a password_hash()/password_verify() cuando puedas.
+if ($u['contrasena'] !== $contrasena) {
+    $_SESSION['flash_error'] = "Usuario o contraseña incorrectos.";
+    header("Location: login.php");
+    exit();
+}
+
+// 3) Setear sesión (coherente con includes/auth.php)
+$_SESSION['id_usuario']     = (int)$u['id_usuario'];
+$_SESSION['nombre_usuario'] = $u['nombre'];
+unset($_SESSION['rol']); // limpiar rol previo por si acaso
+
+// 4) Determinar rol y redirigir
+$rol = null;
+
+// ¿Es admin?
+$stmt = $con->prepare("SELECT 1 FROM admin WHERE id_usuario = ? LIMIT 1");
+$stmt->bind_param("i", $_SESSION['id_usuario']);
+$stmt->execute();
+if ($stmt->get_result()->num_rows === 1) {
+    $rol = 'admin';
+}
+
+// ¿Es cliente?
+if ($rol === null) {
+    $stmt = $con->prepare("SELECT 1 FROM cliente WHERE id_usuario = ? LIMIT 1");
+    $stmt->bind_param("i", $_SESSION['id_usuario']);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows === 1) {
+        $rol = 'cliente';
+    }
+}
+
+if ($rol === 'admin') {
+    $_SESSION['rol'] = 'admin';
+    header("Location: ../usuarios/administrador/index_admin.php");
+    exit();
+}
+
+if ($rol === 'cliente') {
+    $_SESSION['rol'] = 'cliente';
+    header("Location: ../usuarios/cliente/index_cliente.php");
+    exit();
+}
+
+// Sin rol asignado → mensaje y volver a login (sin bloquear)
+$_SESSION['flash_error'] = "Tu usuario no tiene rol asignado aún.";
+header("Location: login.php");
+exit();

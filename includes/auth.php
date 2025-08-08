@@ -1,31 +1,47 @@
 <?php
+// includes/auth.php
+
+// Asegura cookie de sesión válida para todo el sitio
 if (session_status() === PHP_SESSION_NONE) {
+    // opcional, pero ayuda cuando tienes rutas /supermarketConexion/...
+    session_set_cookie_params(['path' => '/']);
     session_start();
 }
 
-// Verifica que el usuario esté logueado
-function verificarLogin() {
-    if (!isset($_SESSION['nombre_usuario']) || !isset($_SESSION['rol'])) {
-        // Si no hay sesión, redirige al login
+/**
+ * Requiere que exista sesión iniciada.
+ * NO valida rol; eso lo hace require_role().
+ */
+function require_login(): void {
+    if (empty($_SESSION['id_usuario'])) {          // clave principal para saber si hay sesión
         header("Location: /supermarketConexion/login/login.php");
         exit();
     }
 }
 
-// Verifica si el usuario es administrador
-function verificarAdmin() {
-    verificarLogin(); // Primero se asegura que haya login
-    if ($_SESSION['rol'] !== 'admin') {
-        echo "⛔ Acceso denegado: esta sección es solo para administradores.";
+/**
+ * Requiere que el usuario tenga uno de los roles permitidos.
+ * $roles puede ser 'admin', 'cliente' o ['admin','cliente'].
+ */
+function require_role($roles): void {
+    require_login();
+    if (is_string($roles)) {
+        $roles = [$roles];
+    }
+    $rol = $_SESSION['rol'] ?? null;
+    if (!$rol || !in_array($rol, $roles, true)) {
+        header("Location: /supermarketConexion/sin_acceso.php");
         exit();
     }
 }
 
-// Verifica si el usuario es cliente
-function verificarCliente() {
-    verificarLogin(); // Primero se asegura que haya login
-    if ($_SESSION['rol'] !== 'cliente') {
-        echo "⛔ Acceso denegado: esta sección es solo para clientes.";
-        exit();
-    }
+/**
+ * Devuelve datos mínimos del usuario autenticado.
+ */
+function current_user(): array {
+    return [
+        'id'     => $_SESSION['id_usuario']   ?? null,
+        'nombre' => $_SESSION['nombre_usuario'] ?? null,
+        'rol'    => $_SESSION['rol']          ?? null,
+    ];
 }

@@ -1,49 +1,119 @@
 <?php
-include('../../includes/conexion.php'); // Subimos 2 niveles para encontrar el archivo
-include('../../includes/header.php');   // Encabezado con menú
+// usuarios/cliente/index_cliente.php
+require __DIR__ . '/../../includes/auth.php';
+require_login();
+require_role('cliente');
 
-$con = conexion(); // Ejecutamos la función que conecta con la BD
+require __DIR__ . '/../../includes/conexion.php';
+$con = conexion();
+
+// Traer productos disponibles (stock > 0)
+$stmt = $con->prepare("
+  SELECT id_producto, nombre, descripcion, precio, stock
+  FROM producto
+  WHERE stock > 0
+  ORDER BY nombre
+");
+$stmt->execute();
+$productos = $stmt->get_result();
+
+// Base del proyecto para armar URLs (ajusta si tu carpeta cambia)
+$BASE = '/supermarketConexion';
 ?>
 
-<?php
-$sql = "SELECT cliente.id_cliente, usuario.nombre, usuario.apellido, cliente.direccion, cliente.telefono 
-        FROM cliente 
-        INNER JOIN usuario ON cliente.id_usuario = usuario.id_usuario";
+<?php require __DIR__ . '/../../includes/header.php'; ?>
 
-$resultado = mysqli_query($con, $sql);
-?>
+<style>
+  .catalog-hero{
+    padding: 1.5rem 0 0.5rem;
+    background: linear-gradient(135deg, var(--brand-green), var(--brand-green-dark));
+    color:#fff;
+  }
+  .product-card{
+    border:1px solid #eee; border-radius:16px; overflow:hidden;
+    transition: transform .08s ease, box-shadow .2s ease;
+    background:#fff;
+  }
+  .product-card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0,0,0,.08);
+  }
+  .product-thumb{
+    height: 160px; background: linear-gradient(135deg, #f6f8f7, #e9f5ec);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .product-thumb i{ font-size:42px; color:#9ab9a2; }
+  .price{ font-weight:700; color: var(--brand-green); }
+  .stock{ font-size:.9rem; color:#6c757d; }
+  .search-wrap{ margin-top: -26px; }
+</style>
 
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Listado de Clientes</h2>
-    <a href="crear_cliente.php" class="btn btn-success mb-3">➕ Agregar nuevo cliente</a>
+<section class="catalog-hero">
+  <div class="container">
+    <h1 class="h3 mb-2"><i class="bi bi-basket2-fill me-2"></i>Catálogo de productos</h1>
+    <p class="mb-3" style="opacity:.9">Explora y añade artículos a tu carrito.</p>
+  </div>
+</section>
 
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Dirección</th>
-                <th>Teléfono</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php while ($cliente = mysqli_fetch_assoc($resultado)): ?>
-            <tr>
-                <td><?= $cliente['id_cliente'] ?></td>
-                <td><?= $cliente['nombre'] ?></td>
-                <td><?= $cliente['apellido'] ?></td>
-                <td><?= $cliente['direccion'] ?></td>
-                <td><?= $cliente['telefono'] ?></td>
-                <td>
-                    <a href="editar_cliente.php?id=<?= $cliente['id_cliente'] ?>" class="btn btn-sm btn-warning">✏️ Editar</a>
-                    <a href="eliminar_cliente.php?id=<?= $cliente['id_cliente'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Deseas eliminar este cliente?')">🗑️ Eliminar</a>
-                </td>
-            </tr>
-            <?php endwhile; ?>
-        </tbody>
-    </table>
+<div class="container search-wrap">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8">
+      <form class="input-group mb-4" method="get">
+        <input type="text" class="form-control" name="q" placeholder="Buscar por nombre o descripción…" value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+        <button class="btn btn-outline-brand" type="submit"><i class="bi bi-search"></i> Buscar</button>
+      </form>
+    </div>
+  </div>
 </div>
 
-<?php include('../../includes/footer.php'); ?>
+<div class="container pb-5">
+  <div class="row g-4">
+    <?php
+    // Si viene búsqueda, filtramos en memoria (rápido y simple). Si prefieres SQL, te lo cambio.
+    $q = trim($_GET['q'] ?? '');
+    $hayProductos = false;
+
+    while ($p = $productos->fetch_assoc()):
+      if ($q !== '') {
+        $needle = mb_strtolower($q);
+        $hay = str_contains(mb_strtolower($p['nombre']), $needle) || str_contains(mb_strtolower($p['descripcion'] ?? ''), $needle);
+        if (!$hay) continue;
+      }
+      $hayProductos = true;
+    ?>
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="product-card h-100 d-flex flex-column">
+          <div class="product-thumb">
+            <!-- Si luego agregas columna 'imagen', aquí la mostramos. Por ahora un placeholder bonito -->
+            <i class="bi bi-bag-check-fill"></i>
+          </div>
+          <div class="p-3 d-flex flex-column gap-1 flex-grow-1">
+            <h2 class="h6 m-0"><?= htmlspecialchars($p['nombre']) ?></h2>
+            <?php if (!empty($p['descripcion'])): ?>
+              <div class="text-muted" style="font-size:.92rem;"><?= htmlspecialchars($p['descripcion']) ?></div>
+            <?php endif; ?>
+            <div class="d-flex justify-content-between align-items-center mt-auto pt-2">
+              <span class="price">$<?= number_format((float)$p['precio'], 0, ',', '.') ?></span>
+              <span class="stock">Stock: <?= (int)$p['stock'] ?></span>
+            </div>
+          </div>
+          <div class="p-3 pt-0">
+            <a class="btn btn-brand w-100"
+   href="<?= $BASE ?>/carrito/agregar_al_carrito.php?id=<?= (int)$p['id_producto'] ?>">
+  <i class="bi bi-cart-plus"></i> Agregar al carrito
+</a>
+
+          </div>
+        </div>
+      </div>
+    <?php endwhile; ?>
+
+    <?php if (!$hayProductos): ?>
+      <div class="col-12">
+        <div class="alert alert-warning text-center">
+          No encontramos productos disponibles<?= $q ? " para “".htmlspecialchars($q)."”" : "" ?>.
+        </div>
+      </div>
+    <?php endif; ?>
+  </div>
+</div>

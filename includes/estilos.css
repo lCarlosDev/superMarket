@@ -1,47 +1,76 @@
+/* ===== Paleta global ===== */
+:root{
+  --brand-green: #28a745;
+  --brand-green-dark: #218838;
+  --brand-yellow: #f6c453;
+  --brand-text: #1b1b1b;
+}
+
+/* ===== Utilidades de marca ===== */
+.text-brand{ color: var(--brand-green) !important; }
+
+.btn-brand{
+  background: var(--brand-green);
+  border-color: var(--brand-green);
+  color:#fff;
+}
+.btn-brand:hover{
+  background: var(--brand-green-dark);
+  border-color: var(--brand-green-dark);
+  color:#fff;
+}
+.btn-outline-brand{
+  border-color: var(--brand-green);
+  color: var(--brand-green);
+}
+.btn-outline-brand:hover{
+  background: var(--brand-green);
+  color:#fff;
+}
+
+.form-control:focus{
+  border-color: var(--brand-green);
+  box-shadow: 0 0 0 .2rem rgba(40,167,69,.15);
+}
+
+.badge-role{
+  background: var(--brand-yellow);
+  color:#333;
+}
+
+/* Marca SIEMPRE en verde */
+.navbar .navbar-brand,
+.navbar .navbar-brand i{
+  color: var(--brand-green) !important;
+}
+
+/* Badge del carrito */
+.badge-cart{
+  background: var(--brand-green) !important;
+  color:#fff !important;
+}
+
+/* Thead de tablas con color de marca */
+.table thead.thead-brand th{
+  background-color: var(--brand-green) !important;
+  color:#fff !important;
+  border-color: var(--brand-green-dark) !important;
+}
+
+/* ===== (Opcional) Estilos anteriores que tenías ===== */
 *, html{
-    margin : 0;
-    padding : 0;
-    box-sizing: border-box;
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
-.form_registro{
-    display: flex;
-    flex-direction: column;
-    align-items: center; 
-    justify-content: center;
-    gap: 4rem;
-    padding:6rem;
-}
+.navbar{ background-color:#f4f4f4; padding:10px; }
 
-.navbar {
-    background-color: #f4f4f4;
-    padding: 10px;
-}
-
-.nav-menu {
-    list-style: none;
-    display: flex;
-    gap: 20px;
-    margin: 0;
-    padding: 0;
-}
-
-.nav-menu li a {
-    text-decoration: none;
-    color: #333;
-    font-weight: bold;
-}
-
-.nav-menu li a:hover {
-    color: #007bff;
-}
-
-/* Footer estilizado */
-.footer {
-    text-align: center;
-    padding: 10px 0;
-    font-size: 14px;
-    color: #666;
-    background-color: #f1f1f1;
-    margin-top: 30px;
+.footer{
+  text-align:center;
+  padding:10px 0;
+  font-size:14px;
+  color:#666;
+  background-color:#f1f1f1;
+  margin-top:30px;
 }
