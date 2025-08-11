@@ -74,3 +74,46 @@
   background-color:#f1f1f1;
   margin-top:30px;
 }
+
+:root{
+  --brand-green:#28a745;
+  --brand-green-dark:#1f7a36;
+  --brand-yellow:#f6c453;
+}
+
+/* Botones marca */
+.btn-brand{
+  background:var(--brand-green);
+  border-color:var(--brand-green);
+  color:#fff;
+}
+.btn-brand:hover{ background:var(--brand-green-dark); border-color:var(--brand-green-dark); color:#fff; }
+.btn-outline-brand{
+  border-color:var(--brand-green);
+  color:var(--brand-green);
+}
+.btn-outline-brand:hover{ background:var(--brand-green); color:#fff; }
+
+/* Encabezados y tablas */
+.page-head{
+  background:linear-gradient(135deg,var(--brand-green),var(--brand-green-dark));
+  color:#fff; padding:1rem 0;
+}
+.thead-brand th{
+  background:var(--brand-green);
+  color:#fff;
+  border-color:var(--brand-green-dark);
+}
+
+/* Tarjetas suaves */
+.card-soft{
+  border:1px solid #eef2ee;
+  border-radius:14px;
+  box-shadow:0 10px 24px rgba(0,0,0,.06);
+}
+
+/* Badges */
+.badge-role{
+  background: var(--brand-yellow);
+  color:#5b4300;
+}

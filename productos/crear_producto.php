@@ -25,25 +25,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Subir imagen (opcional)
-    if (!$err && !empty($_FILES['imagen']['name'])) {
-        $uploadsDir = __DIR__ . '/../uploads';
-        if (!is_dir($uploadsDir)) {
-            mkdir($uploadsDir, 0777, true);
-        }
-
-        $origName  = $_FILES['imagen']['name'];
-        $ext       = pathinfo($origName, PATHINFO_EXTENSION);
-        $baseName  = pathinfo($origName, PATHINFO_FILENAME);
-        $safeName  = preg_replace('/[^A-Za-z0-9._-]/', '_', $baseName);
-        $filename  = time() . '_' . $safeName . '.' . $ext;
-        $destino   = $uploadsDir . '/' . $filename;
-
-        if (!move_uploaded_file($_FILES['imagen']['tmp_name'], $destino)) {
-            $err = "No se pudo guardar la imagen. Intenta con otra.";
-        } else {
-            $imagen = $filename; // guardaremos solo el nombre en la BD
-        }
+   // Subir imagen (opcional)
+if (!$err && !empty($_FILES['imagen']['name']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+    // Carpeta correcta: /img (lo mismo que usa el listado)
+    $imgDir = __DIR__ . '/../img';
+    if (!is_dir($imgDir)) {
+        mkdir($imgDir, 0777, true);
     }
+
+    // Validar extensión y mimetype
+    $tmp  = $_FILES['imagen']['tmp_name'];
+    $orig = $_FILES['imagen']['name'];
+    $ext  = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
+    $okExt = ['jpg','jpeg','png','webp','gif'];
+
+    if (in_array($ext, $okExt, true)) {
+        $mime = mime_content_type($tmp);
+        if (preg_match('~^image/(jpeg|png|webp|gif)$~', $mime)) {
+            // Nombre único y seguro
+            $safeBase = preg_replace('/[^A-Za-z0-9._-]/', '_', pathinfo($orig, PATHINFO_FILENAME));
+            $imagen   = 'prod_' . date('Ymd_His') . '_' . bin2hex(random_bytes(3)) . '.' . $ext;
+            $destino  = $imgDir . '/' . $imagen;
+
+            if (!move_uploaded_file($tmp, $destino)) {
+                $err = "No se pudo guardar la imagen. Intenta con otra.";
+                $imagen = null;
+            }
+        } else {
+            $err = "Formato de imagen no válido (JPEG/PNG/WEBP/GIF).";
+        }
+    } else {
+        $err = "Extensión no permitida. Usa JPG, PNG, WEBP o GIF.";
+    }
+}
+
 
     // Insertar en BD
     if (!$err) {

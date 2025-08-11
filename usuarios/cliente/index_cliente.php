@@ -9,11 +9,12 @@ $con = conexion();
 
 // Traer productos disponibles (stock > 0)
 $stmt = $con->prepare("
-  SELECT id_producto, nombre, descripcion, precio, stock
+  SELECT id_producto, nombre, descripcion, precio, stock, imagen
   FROM producto
   WHERE stock > 0
   ORDER BY nombre
 ");
+
 $stmt->execute();
 $productos = $stmt->get_result();
 
@@ -84,9 +85,24 @@ $BASE = '/supermarketConexion';
       <div class="col-12 col-sm-6 col-md-4 col-lg-3">
         <div class="product-card h-100 d-flex flex-column">
           <div class="product-thumb">
-            <!-- Si luego agregas columna 'imagen', aquí la mostramos. Por ahora un placeholder bonito -->
-            <i class="bi bi-bag-check-fill"></i>
-          </div>
+  <?php
+    // Mostrar imagen si existe, si no usar placeholder
+    $imgNombre = $p['imagen'] ?? '';
+    $imgPath   = __DIR__ . '/../../img/' . $imgNombre;              // ruta en disco
+    $imgUrl    = $BASE . '/img/' . rawurlencode($imgNombre);        // url pública
+    $hasImg    = $imgNombre !== '' && file_exists($imgPath);
+  ?>
+
+  <?php if ($hasImg): ?>
+    <img src="<?= $imgUrl ?>" alt="<?= htmlspecialchars($p['nombre']) ?>"
+         style="max-height:100%; max-width:100%; object-fit:contain;">
+  <?php else: ?>
+    <!-- placeholder si no hay imagen -->
+    <img src="<?= $BASE ?>/img/placeholder.png" alt="Sin imagen"
+         style="max-height:100%; max-width:100%; object-fit:contain; opacity:.9;">
+  <?php endif; ?>
+</div>
+
           <div class="p-3 d-flex flex-column gap-1 flex-grow-1">
             <h2 class="h6 m-0"><?= htmlspecialchars($p['nombre']) ?></h2>
             <?php if (!empty($p['descripcion'])): ?>
