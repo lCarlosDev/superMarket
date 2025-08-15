@@ -63,9 +63,50 @@ require('../includes/auth.php'); // sesión consistente
 
     .mini-link{ color:#6b6b6b; text-decoration:none; }
     .mini-link:hover{ color:#222; text-decoration:underline; }
+
+    /* >>> Mensajes flash flotantes (no mueven la tarjeta) <<< */
+    .flash-wrap{
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1080;
+      width: min(92%, 520px);
+    }
+    .flash-wrap .alert{
+      box-shadow: 0 10px 25px rgba(0,0,0,.08);
+      margin-bottom: .5rem;
+    }
   </style>
 </head>
 <body>
+
+<?php
+// --- FLASH en login.php ---
+if (session_status() === PHP_SESSION_NONE) { session_start(); } // por si header no inició sesión
+
+// Leer y “consumir” los mensajes flash
+$flash_success = $_SESSION['flash_success'] ?? '';
+$flash_error   = $_SESSION['flash_error'] ?? '';
+unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+?>
+
+<!-- Mensajes flotantes -->
+<div class="flash-wrap">
+  <?php if ($flash_success): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <?= htmlspecialchars($flash_success) ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+  <?php endif; ?>
+
+  <?php if ($flash_error): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <?= htmlspecialchars($flash_error) ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+  <?php endif; ?>
+</div>
 
   <div class="auth-card">
     <!-- LOGO + Marca -->
@@ -78,12 +119,6 @@ require('../includes/auth.php'); // sesión consistente
     </div>
 
     <div class="p-4 p-md-5">
-      <?php if (!empty($_SESSION['flash_error'])): ?>
-        <div class="alert alert-danger text-center">
-          <?= $_SESSION['flash_error']; unset($_SESSION['flash_error']); ?>
-        </div>
-      <?php endif; ?>
-
       <form action="validar_login.php" method="POST" novalidate>
         <div class="mb-3 position-relative has-icon">
           <i class="bi bi-envelope-fill input-icon"></i>
@@ -101,7 +136,6 @@ require('../includes/auth.php'); // sesión consistente
         </div>
 
         <div class="d-grid mt-4">
-          <!-- Usa el botón del tema global -->
           <button type="submit" class="btn btn-brand btn-lg">Ingresar</button>
         </div>
       </form>
@@ -122,6 +156,16 @@ require('../includes/auth.php'); // sesión consistente
       icon.className = isText ? 'bi bi-eye' : 'bi bi-eye-slash';
     }
   </script>
+
+  <!-- Auto-cerrar flashes a los 4.5s (opcional) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    setTimeout(() => {
+      document.querySelectorAll('.flash-wrap .alert').forEach(a => {
+        const alert = bootstrap.Alert.getOrCreateInstance(a);
+        alert.close();
+      });
+    }, 4500);
+  </script>
 </body>
 </html>

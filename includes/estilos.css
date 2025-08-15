@@ -117,3 +117,17 @@
   background: var(--brand-yellow);
   color:#5b4300;
 }
+
+/* Flash centrado y flotante (no mueve el layout) */
+.flash-wrap{
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1080;                 /* por encima de la tarjeta */
+  width: min(92%, 520px);        /* mismo ancho visual que la card */
+}
+.flash-wrap .alert{ 
+  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+  margin-bottom: .5rem;          /* si mostráramos varios juntos */
+}

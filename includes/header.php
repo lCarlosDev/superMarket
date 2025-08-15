@@ -1,19 +1,20 @@
 <?php
 // includes/header.php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
-require_once __DIR__ . '/auth.php'; // no pasa nada si ya se cargó antes
+// OJO: auth.php debe sólo definir funciones (no redirigir por sí mismo)
+require_once __DIR__ . '/auth.php';
 
-// Ruta base del proyecto (la tuya)
+// Ruta base de tu proyecto
 $BASE = '/supermarketConexion';
 
-// Datos de usuario desde sesión
+// Datos de sesión
 $u = [
   'id'     => $_SESSION['id_usuario'] ?? null,
-  'rol'    => $_SESSION['rol'] ?? null,       // 'admin' | 'cliente' | null
+  'rol'    => $_SESSION['rol'] ?? null,   // 'admin' | 'cliente' | null
   'nombre' => $_SESSION['nombre'] ?? '',
 ];
 
-// Contador simple del carrito
+// Contador del carrito (si aplica)
 $cartCount = 0;
 if (!empty($_SESSION['carrito']) && is_array($_SESSION['carrito'])) {
   foreach ($_SESSION['carrito'] as $it) {
@@ -35,10 +36,10 @@ if (!empty($_SESSION['carrito']) && is_array($_SESSION['carrito'])) {
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg bg-light shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
   <div class="container">
     <?php
-      // El logo apunta distinto: si es admin, lo mandamos a su pantalla; si no, al index público
+      // Logo: si es admin, a su panel; de lo contrario, al index público
       $homeHref = ($u['rol'] === 'admin')
         ? "$BASE/usuarios/administrador/index_admin.php"
         : "$BASE/index.php";
@@ -47,7 +48,7 @@ if (!empty($_SESSION['carrito']) && is_array($_SESSION['carrito'])) {
       <i class="bi bi-basket2-fill me-1"></i> SuperMarket
     </a>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal" aria-controls="menuPrincipal" aria-expanded="false" aria-label="Menú">
       <span class="navbar-toggler-icon"></span>
     </button>
 
@@ -63,6 +64,12 @@ if (!empty($_SESSION['carrito']) && is_array($_SESSION['carrito'])) {
           <li class="nav-item">
             <a class="nav-link" href="<?= $BASE ?>/productos/index_producto.php">
               <i class="bi bi-box-seam me-1"></i> Inventario
+            </a>
+          </li>
+          <!-- NUEVO: Solicitudes de admin -->
+          <li class="nav-item">
+            <a class="nav-link" href="<?= $BASE ?>/usuarios/administrador/solicitudes_admin.php">
+              <i class="bi bi-person-badge me-1"></i> Solicitudes
             </a>
           </li>
 
